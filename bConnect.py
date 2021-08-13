@@ -5,6 +5,7 @@ import argparse
 
 # Takes a job number (default to most recent), and list all files backed up, along with their sizes
 
+# decode_stats taken from https://gist.github.com/Xiol/ee9d6e9d44494ea8df85
 B64_VALS = {
              '+': 62, '/': 63, '1': 53, '0': 52, '3': 55, '2': 54, '5': 57,
              '4': 56, '7': 59, '6': 58, '9': 61, '8': 60, 'A': 0, 'C': 2,
