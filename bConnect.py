@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import psycopg2
 import getpass
-import base64
+import argparse
 
 # Takes a job number (default to most recent), and list all files backed up, along with their sizes
 
@@ -31,9 +31,16 @@ def decode_lstats(stats):
 
     return out
 
-def Connect():    
+def Connect():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-j', '--job', default='241', help='which job to parse', dest='job')
+    parser.add_argument('-s', '--summarize', default=False, help='which job to parse', dest='summarize', action='store_true')
+
+    args = parser.parse_args()
+    jobnum = args.job
+    summarize = args.summarize
+
     PW = getpass.getpass()
-    jobnum = '241'
 
     conn = psycopg2.connect(database="bacula",
                                    user='geoff',
@@ -67,9 +74,10 @@ def Connect():
             maxFileName = record[1]
         print("{0}{1}: {2}".format(record[0], record[1], out["st_size"]))
 
-    print("{0} records retrieved".format(len(rows)))
-    print("Total MB backed up: {0:.3f}".format(totalSize/1024/1024))
-    print("largest file: {0}{1}: {2:.3f} MB".format(maxPath, maxFileName, maxSize/1024/1024))
+    if summarize == True:
+        print("{0} records retrieved".format(len(rows)))
+        print("Total uncompressed size backed up: {0:.3f} MB".format(totalSize/1024/1024))
+        print("Largest file: {0}{1}: {2:.3f} MB".format(maxPath, maxFileName, maxSize/1024/1024))
 
 if __name__ == "__main__":
     Connect()
