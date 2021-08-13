@@ -54,12 +54,15 @@ def Connect():
 
     job = args.job
     if job == '0':
-        cursor.execute('SELECT jobid ' +
-                       'FROM job ' +
-                       'ORDER BY endtime DESC ' +
-                       'LIMIT 1')
-        rows = cursor.fetchall()
-        job = str(rows[0][0])
+        try:
+            cursor.execute('SELECT jobid ' +
+                           'FROM job ' +
+                           'ORDER BY endtime DESC ' +
+                           'LIMIT 1')
+            rows = cursor.fetchall()
+            job = str(rows[0][0])
+        except:
+            print("Query failed!")
 
     try:
         cursor.execute('SELECT path.path,filename.name,file.lstat '
