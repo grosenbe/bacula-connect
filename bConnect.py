@@ -3,7 +3,8 @@ import psycopg2
 import getpass
 import argparse
 
-# Takes a job number (default to most recent), and list all files backed up, along with their sizes
+# Takes a job number (default most recent) and list all files backed up, along
+# with their sizes
 
 # decode_stats taken from https://gist.github.com/Xiol/ee9d6e9d44494ea8df85
 B64_VALS = {
@@ -18,8 +19,11 @@ B64_VALS = {
     'u': 46, 't': 45, 'w': 48, 'v': 47, 'y': 50, 'x': 49, 'z': 51
 }
 
+
 def decode_lstats(stats):
-    fields = "st_dev st_ino st_mode st_nlink st_uid st_gid st_rdev st_size st_blksize st_blocks st_atime st_mtime st_ctime LinkFI st_flags data".split()
+    fields = """st_dev st_ino st_mode st_nlink st_uid st_gid
+    st_rdev st_size st_blksize st_blocks st_atime st_mtime
+    st_ctime LinkFI st_flags data""".split()
     out = {}
 
     for i, element in enumerate(stats.split()):
@@ -32,15 +36,24 @@ def decode_lstats(stats):
 
     return out
 
+
 def Connect():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', '--database', default='bacula', help='Which database to connect to')
-    parser.add_argument('-o', '--host', default='thebox', help='Which host to connect to')
-    parser.add_argument('-p', '--port', default='5433', help='Which port to connect to')
-    parser.add_argument('-u', '--user', default='geoff', help='User name')
-    parser.add_argument('-j', '--job', default='0', help='Which job to parse')
-    parser.add_argument('-s', '--summarize', default=False, help='Print summary information', action='store_true')
-    parser.add_argument('-q', '--quiet', default=False, help='Suppress file-by-file output', action='store_true')
+    parser.add_argument('-d', '--database', default='bacula',
+                        help='Which database to connect to')
+    parser.add_argument('-o', '--host', default='thebox',
+                        help='Which host to connect to')
+    parser.add_argument('-p', '--port', default='5433',
+                        help='Which port to connect to')
+    parser.add_argument('-u', '--user', default='geoff',
+                        help='User name')
+    parser.add_argument('-j', '--job', default='0',
+                        help='Which job to parse')
+    parser.add_argument('-s', '--summarize', default=False,
+                        help='Print summary information', action='store_true')
+    parser.add_argument('-q', '--quiet', default=False,
+                        help='Suppress file-by-file output',
+                        action='store_true')
 
     args = parser.parse_args()
     PW = getpass.getpass()
@@ -61,8 +74,8 @@ def Connect():
                            'LIMIT 1')
             rows = cursor.fetchall()
             job = str(rows[0][0])
-        except:
-            print("Query failed!")
+        except psycopg2.OperationalError as e:
+            print("Query failed with error " + e.pgerror)
 
     try:
         cursor.execute('SELECT path.path,filename.name,file.lstat '
@@ -73,8 +86,8 @@ def Connect():
                        + job
                        + ' AND filename.name != \'\''
                        )
-    except:
-        print("Query failed!")
+    except psycopg2.OperationalError as e:
+        print("Query failed with error " + e.pgerror)
 
     rows = cursor.fetchall()
     totalSize = 0
@@ -88,13 +101,16 @@ def Connect():
             maxPath = record[0]
             maxFileName = record[1]
 
-        if args.quiet == False:
+        if not args.quiet:
             print("{0}{1}: {2}".format(record[0], record[1], out["st_size"]))
 
-    if args.summarize == True:
+    if args.summarize:
         print("{0} records retrieved".format(len(rows)))
-        print("Total uncompressed size backed up: {0:.3f} MB".format(totalSize/1024/1024))
-        print("Largest file: {0}{1}: {2:.3f} MB".format(maxPath, maxFileName, maxSize/1024/1024))
+        print("Total uncompressed size backed up: {0:.3f} MB"
+              .format(totalSize/1024/1024))
+        print("Largest file: {0}{1}: {2:.3f} MB"
+              .format(maxPath, maxFileName, maxSize/1024/1024))
+
 
 if __name__ == "__main__":
     Connect()

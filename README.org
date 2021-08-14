@@ -1,0 +1,4 @@
+#+TITLE: bacula-connect
+Since there isn't a way to use bconsole to get the size of each file backed up during a backup, this
+script queries the database and reconstructs the size of the files backed up using the lstat data
+contained in the file records in the database.
