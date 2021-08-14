@@ -4,7 +4,7 @@ import getpass
 import argparse
 
 # Takes a job number (default most recent) and list all files backed up, along
-# with their sizes
+# with their sizes.
 
 # decode_stats taken from https://gist.github.com/Xiol/ee9d6e9d44494ea8df85
 B64_VALS = {
@@ -68,14 +68,22 @@ def Connect():
     job = args.job
     if job == '0':
         try:
-            cursor.execute('SELECT jobid ' +
+            cursor.execute('SELECT clientid,jobid ' +
                            'FROM job ' +
                            'ORDER BY endtime DESC ' +
                            'LIMIT 1')
             rows = cursor.fetchall()
-            job = str(rows[0][0])
+            job = str(rows[0][1])
+            clientID = str(rows[0][0])
         except psycopg2.OperationalError as e:
             print("Query failed with error " + e.pgerror)
+    else:
+        cursor.execute('SELECT clientid '
+                       + 'FROM job '
+                       + 'WHERE jobid = '
+                       + job)
+        rows = cursor.fetchall()
+        clientID = str(rows[0][0])
 
     try:
         cursor.execute('SELECT path.path,filename.name,file.lstat '
@@ -105,7 +113,11 @@ def Connect():
             print("{0}{1}: {2}".format(record[0], record[1], out["st_size"]))
 
     if args.summarize:
-        print("{0} records retrieved".format(len(rows)))
+        cursor.execute('SELECT name FROM client WHERE clientid = '
+                       + clientID)
+        name = cursor.fetchall()
+        print("{0} records retrieved for client {1}".format(len(rows),
+                                                            str(name[0][0])))
         print("Total uncompressed size backed up: {0:.3f} MB"
               .format(totalSize/1024/1024))
         print("Largest file: {0}{1}: {2:.3f} MB"
