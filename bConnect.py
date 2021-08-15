@@ -44,7 +44,7 @@ def Connect():
                         help='Which database to connect to')
     parser.add_argument('-o', '--host', default='thebox',
                         help='Which host to connect to')
-    parser.add_argument('-p', '--port', default='5433',
+    parser.add_argument('-p', '--port', default='5432',
                         help='Which port to connect to')
     parser.add_argument('-u', '--user', default='geoff',
                         help='User name')
