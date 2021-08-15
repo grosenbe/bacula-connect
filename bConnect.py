@@ -2,6 +2,7 @@
 import psycopg2
 import getpass
 import argparse
+from datetime import datetime
 
 # Takes a job number (default most recent) and list all files backed up, along
 # with their sizes.
@@ -70,6 +71,7 @@ def Connect():
         try:
             cursor.execute('SELECT clientid,jobid ' +
                            'FROM job ' +
+                           'WHERE type = \'B\' ' +
                            'ORDER BY endtime DESC ' +
                            'LIMIT 1')
             rows = cursor.fetchall()
@@ -87,13 +89,13 @@ def Connect():
 
     try:
         cursor.execute('SELECT path.path,filename.name,file.lstat '
-                       + 'FROM filename '
-                       + 'JOIN file ON file.filenameid = filename.filenameid '
+                       + 'FROM file '
+                       + 'JOIN filename ON '
+                       + 'file.filenameid = filename.filenameid '
                        + 'JOIN path ON path.pathid = file.pathid '
                        + 'WHERE file.jobid = '
                        + job
-                       + ' AND filename.name != \'\''
-                       )
+                       + ' AND filename.name != \'\'')
     except psycopg2.OperationalError as e:
         print("Query failed with error " + e.pgerror)
 
@@ -110,7 +112,8 @@ def Connect():
             maxFileName = record[1]
 
         if not args.quiet:
-            print("{0}{1}: {2}".format(record[0], record[1], out["st_size"]))
+            print("{0}{1},{2},{3}".format(record[0], record[1], out["st_size"],
+                                           datetime.fromtimestamp(out["st_mtime"])))
 
     if args.summarize:
         cursor.execute('SELECT name FROM client WHERE clientid = '
